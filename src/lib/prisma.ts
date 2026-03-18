@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from "@/generated/prisma";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 type ExtendedPrisma = ReturnType<typeof createExtendedPrisma>;
 const globalForPrisma = globalThis as unknown as {
@@ -17,30 +17,7 @@ function getDatabaseUrl() {
 }
 
 function createAdapter() {
-  const databaseUrl = new URL(getDatabaseUrl());
-
-  if (databaseUrl.protocol !== "mysql:") {
-    throw new Error("DATABASE_URL harus memakai skema mysql://");
-  }
-
-  const database = databaseUrl.pathname.replace(/^\//, "");
-  if (!database) {
-    throw new Error("Nama database pada DATABASE_URL wajib diisi");
-  }
-
-  return new PrismaMariaDb({
-    host: databaseUrl.hostname,
-    port: databaseUrl.port ? Number(databaseUrl.port) : 3306,
-    user: decodeURIComponent(databaseUrl.username),
-    password: decodeURIComponent(databaseUrl.password),
-    database,
-    ssl:
-      databaseUrl.searchParams.get("sslaccept") === "strict"
-        ? {
-            rejectUnauthorized: true,
-          }
-        : undefined,
-  });
+  return new PrismaPg({ connectionString: getDatabaseUrl() });
 }
 
 function createExtendedPrisma(client: PrismaClient) {

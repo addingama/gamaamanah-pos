@@ -1,4 +1,4 @@
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma";
 
 function getDatabaseUrl() {
@@ -8,30 +8,7 @@ function getDatabaseUrl() {
 }
 
 function createAdapter() {
-  const databaseUrl = new URL(getDatabaseUrl());
-
-  if (databaseUrl.protocol !== "mysql:") {
-    throw new Error("DATABASE_URL harus memakai skema mysql://");
-  }
-
-  const database = databaseUrl.pathname.replace(/^\//, "");
-  if (!database) {
-    throw new Error("Nama database pada DATABASE_URL wajib diisi");
-  }
-
-  return new PrismaMariaDb({
-    host: databaseUrl.hostname,
-    port: databaseUrl.port ? Number(databaseUrl.port) : 3306,
-    user: decodeURIComponent(databaseUrl.username),
-    password: decodeURIComponent(databaseUrl.password),
-    database,
-    ssl:
-      databaseUrl.searchParams.get("sslaccept") === "strict"
-        ? {
-            rejectUnauthorized: true,
-          }
-        : undefined,
-  });
+  return new PrismaPg({ connectionString: getDatabaseUrl() });
 }
 
 const prisma = new PrismaClient({

@@ -1,6 +1,6 @@
 # Toko Sembako — Internal
 
-Aplikasi web ringan untuk **cek harga** (publik, tanpa login) dan **admin** (barang, kategori, riwayat harga/stok). Stack: Next.js (App Router), TypeScript, Tailwind, Prisma + MySQL.
+Aplikasi web ringan untuk **cek harga** (publik, tanpa login) dan **admin** (barang, kategori, riwayat harga/stok). Stack: Next.js (App Router), TypeScript, Tailwind, Prisma + PostgreSQL.
 
 ## Struktur folder
 
@@ -36,7 +36,7 @@ Isi wajib di `.env`:
 
 | Variabel | Keterangan |
 |----------|------------|
-| `DATABASE_URL` | URL MySQL, contoh: `mysql://USER:PASSWORD@HOST:3306/DBNAME` |
+| `DATABASE_URL` | URL PostgreSQL, contoh: `postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require` |
 | `AUTH_SECRET` | String acak panjang (untuk tanda tangan JWT sesi admin) |
 | `ADMIN_EMAIL` | Email login admin |
 | `ADMIN_PASSWORD_HASH` | Hash bcrypt dalam **base64** (aman di .env). Generate: `node scripts/verify-admin-password.js --generate <password>` |
@@ -101,41 +101,40 @@ npm run dev
 | `/admin/price-history` | Riwayat harga |
 | `/admin/stock-history` | Riwayat stok |
 
-## Deploy ke VPS
+## Deploy ke Vercel
 
-1. Siapkan MySQL di VPS atau server database terpisah yang bisa diakses dari aplikasi.
-2. Tambahkan environment variables di server aplikasi:
+1. Buat database PostgreSQL. Paling praktis pakai **Vercel Postgres**, **Neon**, atau **Supabase**.
+2. Import repository project ini ke Vercel.
+3. Tambahkan environment variables di Vercel:
 
 ```bash
-DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DBNAME
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
 AUTH_SECRET=isi-rahasia-panjang-acak
 ADMIN_EMAIL=admin@domainkamu.com
 ADMIN_PASSWORD_HASH=<hash-base64>
 ADMIN_SESSION_DAYS=7
 ```
 
-3. Install dependency, sinkronkan schema, lalu seed:
+4. Saat deploy, Vercel akan menjalankan `npm install`, `npx prisma db push`, lalu `npm run build`.
+5. Setelah deployment pertama berhasil, isi data awal ke database production dengan:
 
 ```bash
-npm install
-npx prisma db push
 npm run prisma:seed
 ```
 
-4. Build dan jalankan aplikasi:
+Kalau kamu ingin seed dari lokal ke database Vercel, pastikan `.env` lokal berisi `DATABASE_URL` production yang sama lalu jalankan:
 
 ```bash
-npm run build
-npm start
+npm run prisma:seed
 ```
 
-Kalau pakai reverse proxy seperti Nginx, arahkan domain ke port aplikasi Next.js yang kamu jalankan dengan process manager seperti `pm2` atau `systemd`.
+Catatan: SQLite tidak direkomendasikan di Vercel untuk data yang berubah karena filesystem function tidak persisten.
 
 ## Keamanan (penggunaan internal)
 
 - Ganti password default setelah deploy.
 - Jangan commit `.env`.
-- Gunakan MySQL yang dibackup berkala.
+- Gunakan PostgreSQL managed dan backup berkala.
 - Untuk akses dari internet, gunakan HTTPS dan batasi jaringan (VPN / IP allowlist) bila perlu.
 
 ## Skrip npm

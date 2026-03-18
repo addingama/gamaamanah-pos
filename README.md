@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Toko Sembako — Internal
 
-## Getting Started
+Aplikasi web ringan untuk **cek harga** (publik, tanpa login) dan **admin** (barang, kategori, riwayat harga/stok). Stack: Next.js (App Router), TypeScript, Tailwind, Prisma + SQLite.
 
-First, run the development server:
+## Struktur folder
+
+| Path | Isi |
+|------|-----|
+| `src/app/` | Route App Router (`/`, `/admin/*`, API publik) |
+| `src/components/admin/` | UI admin (nav, dialog stok, hapus) |
+| `src/components/ui/` | Komponen UI kecil (input, badge) |
+| `src/features/price-check/` | Halaman cek harga (publik) |
+| `src/lib/` | Auth, Prisma, format, validasi Zod, skema API |
+| `prisma/` | Schema, migrasi, seed |
+
+## Prasyarat
+
+- Node.js 20+
+- npm
+
+## Setup (production-ready lokal / VPS kecil)
+
+1. **Install**
+
+```bash
+npm install
+```
+
+2. **Environment**
+
+```bash
+cp .env.example .env
+```
+
+Isi wajib di `.env`:
+
+| Variabel | Keterangan |
+|----------|------------|
+| `DATABASE_URL` | Contoh: `file:./dev.db` (file SQLite di root project) |
+| `AUTH_SECRET` | String acak panjang (untuk tanda tangan JWT sesi admin) |
+| `ADMIN_EMAIL` | Email login admin |
+| `ADMIN_PASSWORD_HASH` | Hash bcrypt dalam **base64** (aman di .env). Generate: `node scripts/verify-admin-password.js --generate <password>` |
+| `ADMIN_SESSION_DAYS` | Lama sesi (hari), default `7` |
+
+Generate contoh:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+node scripts/verify-admin-password.js --generate admin123
+```
+
+**Password admin:** Hash disimpan dalam base64 agar aman di `.env` (tanpa masalah karakter `$`).
+
+- Cek password: `npm run verify-password -- <password-kamu>`
+- Generate hash base64 untuk `.env`: `node scripts/verify-admin-password.js --generate <password-baru>`
+
+3. **Database**
+
+```bash
+npx prisma migrate deploy
+npm run prisma:seed
+```
+
+Untuk development dengan migrasi baru:
+
+```bash
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+4. **Build & jalankan**
+
+```bash
+npm run build
+npm start
+```
+
+Development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Aturan bisnis (ringkas)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Publik `/`**: hanya menampilkan barang **aktif** (`isActive`). Harga yang ditampilkan = **harga jual**. Tidak ada harga beli di API publik.
+- **Admin**: dilindungi cookie JWT + layout `requireAdminSession`. Logout `/admin/logout` dapat diakses tanpa sesi valid (untuk membersihkan cookie).
+- **Harga**: setiap perubahan harga jual mencatat **PriceHistory**.
+- **Stok** (status Tersedia / Menipis / Habis): perubahan dari form barang atau **ubah stok cepat** mencatat **StockHistory** dengan **jenis perubahan** (wajib di dialog cepat).
+- **Kategori**: hapus kategori tidak menghapus barang; `categoryId` barang jadi kosong.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## URL penting
 
-## Learn More
+| URL | Keterangan |
+|-----|------------|
+| `/` | Cek harga |
+| `/admin/login` | Login admin |
+| `/admin` | Dashboard |
+| `/admin/products` | Daftar & ubah stok cepat |
+| `/admin/categories` | Kategori |
+| `/admin/price-history` | Riwayat harga |
+| `/admin/stock-history` | Riwayat stok |
 
-To learn more about Next.js, take a look at the following resources:
+## Keamanan (penggunaan internal)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Ganti password default setelah deploy.
+- Jangan commit `.env`.
+- SQLite cocok untuk satu server; backup berkala file `.db`.
+- Untuk akses dari internet, gunakan HTTPS dan batasi jaringan (VPN / IP allowlist) bila perlu.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Skrip npm
 
-## Deploy on Vercel
+| Skrip | Fungsi |
+|-------|--------|
+| `npm run dev` | Server pengembangan |
+| `npm run build` | Build produksi |
+| `npm start` | Jalankan hasil build |
+| `npm run lint` | ESLint |
+| `npm run prisma:migrate` | Migrasi development |
+| `npm run prisma:deploy` | Migrasi production (`migrate deploy`) |
+| `npm run prisma:seed` | Isi data awal |
+| `npm run prisma:generate` | Generate client Prisma |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Lisensi
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Penggunaan internal proyek Anda.

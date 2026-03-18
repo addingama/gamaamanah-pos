@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum StockStatus {
+  IN_STOCK
+  LOW
+  OUT
+}
+
+enum StockChangeType {
+  INITIAL
+  RESTOCK
+  SALE
+  ADJUST
+  DAMAGE
+  RETURN
+  OTHER
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String?   @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@index([name])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  sku         String?     @unique
+  barcode     String?     @unique
+  name        String
+  unit        String      @default("pcs")
+  price       Int // harga jual (Rupiah)
+  buyPrice    Int         @default(0) // harga beli — tidak ditampilkan di publik
+  stock       StockStatus @default(IN_STOCK)
+  isActive    Boolean     @default(true)
+  skuNorm     String?
+  barcodeNorm String?
+  nameNorm    String      @default("")
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  priceHistories PriceHistory[]
+  stockHistories StockHistory[]
+
+  @@index([isActive])
+  @@index([nameNorm])
+  @@index([skuNorm])
+  @@index([barcodeNorm])
+  @@index([categoryId])
+}
+
+model PriceHistory {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  previousPrice Int      // 0 = set pertama kali
+  newPrice      Int
+  createdAt     DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model StockHistory {
+  id            String         @id @default(cuid())
+  productId     String
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  previousStock StockStatus
+  newStock      StockStatus
+  changeType    StockChangeType
+  note          String?
+  createdAt     DateTime       @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}

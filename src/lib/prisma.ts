@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from "@/generated/prisma";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 type ExtendedPrisma = ReturnType<typeof createExtendedPrisma>;
 const globalForPrisma = globalThis as unknown as {
@@ -8,6 +8,39 @@ const globalForPrisma = globalThis as unknown as {
 
 function norm(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase();
+}
+
+function getDatabaseUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is required");
+  return url;
+}
+
+function createAdapter() {
+  const databaseUrl = new URL(getDatabaseUrl());
+
+  if (databaseUrl.protocol !== "mysql:") {
+    throw new Error("DATABASE_URL harus memakai skema mysql://");
+  }
+
+  const database = databaseUrl.pathname.replace(/^\//, "");
+  if (!database) {
+    throw new Error("Nama database pada DATABASE_URL wajib diisi");
+  }
+
+  return new PrismaMariaDb({
+    host: databaseUrl.hostname,
+    port: databaseUrl.port ? Number(databaseUrl.port) : 3306,
+    user: decodeURIComponent(databaseUrl.username),
+    password: decodeURIComponent(databaseUrl.password),
+    database,
+    ssl:
+      databaseUrl.searchParams.get("sslaccept") === "strict"
+        ? {
+            rejectUnauthorized: true,
+          }
+        : undefined,
+  });
 }
 
 function createExtendedPrisma(client: PrismaClient) {
@@ -53,9 +86,7 @@ function createExtendedPrisma(client: PrismaClient) {
 }
 
 const basePrisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL ?? "file:./dev.db",
-  }),
+  adapter: createAdapter(),
   log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
 });
 
@@ -63,4 +94,3 @@ export const prisma: ExtendedPrisma =
   globalForPrisma.prisma ?? createExtendedPrisma(basePrisma);
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-

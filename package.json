@@ -4,22 +4,23 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
+    "prisma:deploy": "prisma db push",
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
-    "verify-password": "node scripts/verify-admin-password.js"
+    "verify-password": "node scripts/verify-admin-password.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.5.0",
+    "@prisma/adapter-mariadb": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.8.0",
     "jose": "^6.2.1",
+    "mariadb": "^3.4.5",
     "next": "16.1.7",
     "prisma": "^7.5.0",
     "react": "19.2.3",

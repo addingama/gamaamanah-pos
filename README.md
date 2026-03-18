@@ -1,6 +1,6 @@
 # Toko Sembako — Internal
 
-Aplikasi web ringan untuk **cek harga** (publik, tanpa login) dan **admin** (barang, kategori, riwayat harga/stok). Stack: Next.js (App Router), TypeScript, Tailwind, Prisma + SQLite.
+Aplikasi web ringan untuk **cek harga** (publik, tanpa login) dan **admin** (barang, kategori, riwayat harga/stok). Stack: Next.js (App Router), TypeScript, Tailwind, Prisma + MySQL.
 
 ## Struktur folder
 
@@ -36,7 +36,7 @@ Isi wajib di `.env`:
 
 | Variabel | Keterangan |
 |----------|------------|
-| `DATABASE_URL` | Contoh: `file:./dev.db` (file SQLite di root project) |
+| `DATABASE_URL` | URL MySQL, contoh: `mysql://USER:PASSWORD@HOST:3306/DBNAME` |
 | `AUTH_SECRET` | String acak panjang (untuk tanda tangan JWT sesi admin) |
 | `ADMIN_EMAIL` | Email login admin |
 | `ADMIN_PASSWORD_HASH` | Hash bcrypt dalam **base64** (aman di .env). Generate: `node scripts/verify-admin-password.js --generate <password>` |
@@ -57,7 +57,7 @@ node scripts/verify-admin-password.js --generate admin123
 3. **Database**
 
 ```bash
-npx prisma migrate deploy
+npx prisma db push
 npm run prisma:seed
 ```
 
@@ -101,11 +101,41 @@ npm run dev
 | `/admin/price-history` | Riwayat harga |
 | `/admin/stock-history` | Riwayat stok |
 
+## Deploy ke VPS
+
+1. Siapkan MySQL di VPS atau server database terpisah yang bisa diakses dari aplikasi.
+2. Tambahkan environment variables di server aplikasi:
+
+```bash
+DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DBNAME
+AUTH_SECRET=isi-rahasia-panjang-acak
+ADMIN_EMAIL=admin@domainkamu.com
+ADMIN_PASSWORD_HASH=<hash-base64>
+ADMIN_SESSION_DAYS=7
+```
+
+3. Install dependency, sinkronkan schema, lalu seed:
+
+```bash
+npm install
+npx prisma db push
+npm run prisma:seed
+```
+
+4. Build dan jalankan aplikasi:
+
+```bash
+npm run build
+npm start
+```
+
+Kalau pakai reverse proxy seperti Nginx, arahkan domain ke port aplikasi Next.js yang kamu jalankan dengan process manager seperti `pm2` atau `systemd`.
+
 ## Keamanan (penggunaan internal)
 
 - Ganti password default setelah deploy.
 - Jangan commit `.env`.
-- SQLite cocok untuk satu server; backup berkala file `.db`.
+- Gunakan MySQL yang dibackup berkala.
 - Untuk akses dari internet, gunakan HTTPS dan batasi jaringan (VPN / IP allowlist) bila perlu.
 
 ## Skrip npm
@@ -117,7 +147,7 @@ npm run dev
 | `npm start` | Jalankan hasil build |
 | `npm run lint` | ESLint |
 | `npm run prisma:migrate` | Migrasi development |
-| `npm run prisma:deploy` | Migrasi production (`migrate deploy`) |
+| `npm run prisma:deploy` | Sinkron schema production (`prisma db push`) |
 | `npm run prisma:seed` | Isi data awal |
 | `npm run prisma:generate` | Generate client Prisma |
 

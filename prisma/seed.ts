@@ -1,10 +1,41 @@
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+
+function getDatabaseUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is required");
+  return url;
+}
+
+function createAdapter() {
+  const databaseUrl = new URL(getDatabaseUrl());
+
+  if (databaseUrl.protocol !== "mysql:") {
+    throw new Error("DATABASE_URL harus memakai skema mysql://");
+  }
+
+  const database = databaseUrl.pathname.replace(/^\//, "");
+  if (!database) {
+    throw new Error("Nama database pada DATABASE_URL wajib diisi");
+  }
+
+  return new PrismaMariaDb({
+    host: databaseUrl.hostname,
+    port: databaseUrl.port ? Number(databaseUrl.port) : 3306,
+    user: decodeURIComponent(databaseUrl.username),
+    password: decodeURIComponent(databaseUrl.password),
+    database,
+    ssl:
+      databaseUrl.searchParams.get("sslaccept") === "strict"
+        ? {
+            rejectUnauthorized: true,
+          }
+        : undefined,
+  });
+}
 
 const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL ?? "file:./dev.db",
-  }),
+  adapter: createAdapter(),
 });
 
 async function ensureCategory(name: string, slug: string) {

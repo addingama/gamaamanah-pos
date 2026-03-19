@@ -13,7 +13,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
     "verify-password": "node scripts/verify-admin-password.js",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "deploy": "npx vercel deploy --prod"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",

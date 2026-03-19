@@ -69,6 +69,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <p className="mt-1 text-sm text-zinc-800">{p.unit}</p>
         </div>
         <div>
+          <p className="text-xs font-medium text-zinc-500">Lokasi barang</p>
+          <p className="mt-1 text-sm text-zinc-800">{p.locationNote?.trim() ? p.locationNote : "—"}</p>
+        </div>
+        <div>
           <p className="text-xs font-medium text-zinc-500">Status stok</p>
           <p className="mt-1 text-sm text-zinc-800">{stockLabels[p.stock] ?? p.stock}</p>
         </div>

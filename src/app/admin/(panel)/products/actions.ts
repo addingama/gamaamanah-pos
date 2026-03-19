@@ -13,6 +13,7 @@ export type ProductActionState =
 function formToObject(formData: FormData) {
   return {
     name: String(formData.get("name") ?? ""),
+    locationNote: String(formData.get("locationNote") ?? ""),
     sku: String(formData.get("sku") ?? ""),
     barcode: String(formData.get("barcode") ?? ""),
     unit: String(formData.get("unit") ?? ""),
@@ -42,6 +43,7 @@ export async function createProductAction(
       const product = await tx.product.create({
         data: {
           name: d.name,
+          locationNote: d.locationNote ?? null,
           sku: d.sku ?? null,
           barcode: d.barcode ?? null,
           unit: d.unit,
@@ -71,13 +73,26 @@ export async function createProductAction(
     redirect(`/admin/products/${p.id}`);
   } catch (e: unknown) {
     const code = e && typeof e === "object" && "code" in e ? String((e as { code: string }).code) : "";
+    const message = e instanceof Error ? e.message : "";
+    console.error("createProductAction error", { code, message });
     if (code === "P2002") {
       return {
         ok: false,
         errors: { sku: ["Kode atau barcode sudah dipakai barang lain."] },
       };
     }
-    return { ok: false, errors: { name: ["Gagal menyimpan barang."] } };
+    if (code === "P2022") {
+      return {
+        ok: false,
+        errors: { name: ["Skema basis data belum sinkron. Jalankan: npx prisma db push"] },
+        message: process.env.NODE_ENV === "development" ? `${code}: ${message}` : undefined,
+      };
+    }
+    return {
+      ok: false,
+      errors: { name: ["Gagal menyimpan barang."] },
+      message: process.env.NODE_ENV === "development" ? `${code || "UNKNOWN"}: ${message}` : undefined,
+    };
   }
 }
 
@@ -105,6 +120,7 @@ export async function updateProductAction(
         where: { id },
         data: {
           name: d.name,
+          locationNote: d.locationNote ?? null,
           sku: d.sku ?? null,
           barcode: d.barcode ?? null,
           unit: d.unit,
@@ -134,13 +150,26 @@ export async function updateProductAction(
     });
   } catch (e: unknown) {
     const code = e && typeof e === "object" && "code" in e ? String((e as { code: string }).code) : "";
+    const message = e instanceof Error ? e.message : "";
+    console.error("updateProductAction error", { code, message });
     if (code === "P2002") {
       return {
         ok: false,
         errors: { sku: ["Kode atau barcode sudah dipakai barang lain."] },
       };
     }
-    return { ok: false, errors: { name: ["Gagal memperbarui barang."] } };
+    if (code === "P2022") {
+      return {
+        ok: false,
+        errors: { name: ["Skema basis data belum sinkron. Jalankan: npx prisma db push"] },
+        message: process.env.NODE_ENV === "development" ? `${code}: ${message}` : undefined,
+      };
+    }
+    return {
+      ok: false,
+      errors: { name: ["Gagal memperbarui barang."] },
+      message: process.env.NODE_ENV === "development" ? `${code || "UNKNOWN"}: ${message}` : undefined,
+    };
   }
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${id}`);

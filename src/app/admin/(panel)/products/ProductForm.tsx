@@ -15,6 +15,7 @@ type Props = {
   defaultValues?: {
     id?: string;
     name: string;
+    locationNote: string;
     sku: string;
     barcode: string;
     unit: string;
@@ -32,6 +33,7 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
 
   const dv = defaultValues ?? {
     name: "",
+    locationNote: "",
     sku: "",
     barcode: "",
     unit: "pcs",
@@ -87,6 +89,14 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
               e.currentTarget.value = e.currentTarget.value.toUpperCase();
             }}
             className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+          />
+        </Field>
+        <Field label="Lokasi barang (catatan)" error={state?.ok === false ? state.errors.locationNote?.[0] : undefined}>
+          <input
+            name="locationNote"
+            defaultValue={dv.locationNote}
+            className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+            placeholder="Contoh: Rak A2, Gudang belakang, Kulkas 1"
           />
         </Field>
         <Field label="Satuan" error={state?.ok === false ? state.errors.unit?.[0] : undefined}>

@@ -4,6 +4,12 @@ const stockEnum = z.enum(["IN_STOCK", "LOW", "OUT"]);
 
 export const productFormSchema = z.object({
   name: z.string().trim().min(1, "Nama wajib diisi.").max(200),
+  locationNote: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   sku: z
     .string()
     .trim()

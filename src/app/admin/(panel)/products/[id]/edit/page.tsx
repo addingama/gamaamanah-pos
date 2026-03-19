@@ -25,6 +25,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         defaultValues={{
           id: p.id,
           name: p.name,
+          locationNote: p.locationNote ?? "",
           sku: p.sku ?? "",
           barcode: p.barcode ?? "",
           unit: p.unit,

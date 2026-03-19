@@ -39,6 +39,7 @@ model Product {
   sku         String?     @unique
   barcode     String?     @unique
   name        String
+  locationNote String?
   unit        String      @default("pcs")
   price       Int // harga jual (Rupiah)
   buyPrice    Int         @default(0) // harga beli — tidak ditampilkan di publik

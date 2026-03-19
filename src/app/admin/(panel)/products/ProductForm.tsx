@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type FormEvent } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 import {
   createProductAction,
   updateProductAction,
@@ -42,7 +42,27 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
     categoryId: "",
   };
 
+  function parseMoneyInput(value: string): number {
+    const digits = value.replace(/[^\d]/g, "");
+    if (!digits) return 0;
+    return Number(digits);
+  }
+
+  function formatMoney(value: number): string {
+    return new Intl.NumberFormat("id-ID").format(value);
+  }
+
+  const [price, setPrice] = useState<number>(dv.price);
+  const [buyPrice, setBuyPrice] = useState<number>(dv.buyPrice);
+  const [priceText, setPriceText] = useState<string>(formatMoney(dv.price));
+  const [buyPriceText, setBuyPriceText] = useState<string>(formatMoney(dv.buyPrice));
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
+    const nameEl = e.currentTarget.elements.namedItem("name");
+    if (nameEl instanceof HTMLInputElement) {
+      nameEl.value = String(nameEl.value ?? "").toUpperCase();
+    }
+
     const fd = new FormData(e.currentTarget);
     const price = Number(fd.get("price"));
     const buy = Number(fd.get("buyPrice"));
@@ -63,6 +83,9 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
             name="name"
             required
             defaultValue={dv.name}
+            onInput={(e) => {
+              e.currentTarget.value = e.currentTarget.value.toUpperCase();
+            }}
             className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
           />
         </Field>
@@ -75,12 +98,12 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
             placeholder="pcs, kg, sak..."
           />
         </Field>
-        <Field label="Kode (SKU)" error={state?.ok === false ? state.errors.sku?.[0] : undefined}>
+        {/* <Field label="Kode (SKU)" error={state?.ok === false ? state.errors.sku?.[0] : undefined}>
           <input name="sku" defaultValue={dv.sku} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
         </Field>
         <Field label="Barcode">
           <input name="barcode" defaultValue={dv.barcode} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
-        </Field>
+        </Field> */}
         <Field label="Kategori">
           <select
             name="categoryId"
@@ -110,13 +133,19 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
           label="Harga jual (Rp)"
           error={state?.ok === false ? state.errors.price?.[0] : undefined}
         >
+          <input type="hidden" name="price" value={price} />
           <input
-            name="price"
-            type="number"
-            min={0}
-            step={1}
+            name="priceDisplay"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
             required
-            defaultValue={dv.price}
+            value={priceText}
+            onChange={(e) => {
+              const n = parseMoneyInput(e.currentTarget.value);
+              setPrice(n);
+              setPriceText(formatMoney(n));
+            }}
             className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
           />
         </Field>
@@ -124,13 +153,19 @@ export function ProductForm({ mode, categories, defaultValues }: Props) {
           label="Harga beli (Rp)"
           error={state?.ok === false ? state.errors.buyPrice?.[0] : undefined}
         >
+          <input type="hidden" name="buyPrice" value={buyPrice} />
           <input
-            name="buyPrice"
-            type="number"
-            min={0}
-            step={1}
+            name="buyPriceDisplay"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
             required
-            defaultValue={dv.buyPrice}
+            value={buyPriceText}
+            onChange={(e) => {
+              const n = parseMoneyInput(e.currentTarget.value);
+              setBuyPrice(n);
+              setBuyPriceText(formatMoney(n));
+            }}
             className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
           />
         </Field>

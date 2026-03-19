@@ -23,7 +23,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Permintaan tidak valid." }, { status: 400 });
   }
 
-  const q = normalize(parsed.data.q);
+  const qRaw = parsed.data.q.trim();
+  const q = normalize(qRaw);
   const limit = parsed.data.limit;
 
   if (q.length === 0) {
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
           { nameNorm: { contains: q } },
           { skuNorm: { contains: q } },
           { barcodeNorm: { contains: q } },
+          { category: { is: { name: { contains: qRaw, mode: "insensitive" } } } },
         ],
       },
       orderBy: [{ nameNorm: "asc" }],

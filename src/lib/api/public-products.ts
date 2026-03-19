@@ -6,6 +6,7 @@ export const publicProductSchema = z.object({
   barcode: z.string().nullable(),
   name: z.string(),
   category: z.string().nullable(),
+  locationNote: z.string().nullable(),
   unit: z.string(),
   price: z.number().int(),
   stock: z.enum(["IN_STOCK", "LOW", "OUT"]),

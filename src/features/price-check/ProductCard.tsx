@@ -31,6 +31,11 @@ export function ProductCard({ item }: { item: PublicProduct }) {
             {item.category ? <span>• Kategori: {item.category}</span> : null}
             <span>• Satuan: {item.unit}</span>
           </div>
+          {item.locationNote?.trim() ? (
+            <p className="mt-2 text-xs text-zinc-600">
+              Lokasi: <span className="font-medium text-zinc-800">{item.locationNote}</span>
+            </p>
+          ) : null}
         </div>
         <Badge variant={stock.variant}>{stock.label}</Badge>
       </div>

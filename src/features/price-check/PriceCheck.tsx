@@ -103,6 +103,19 @@ export function PriceCheck() {
             </div>
           ) : null}
 
+          {query.length > 0 && !error ? (
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700 shadow-sm">
+              <p>
+                Menampilkan <span className="font-semibold">{items.length}</span> hasil
+              </p>
+              {isFetching ? (
+                <p className="text-xs text-zinc-500" aria-label="Memperbarui hasil">
+                  Memperbarui…
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
               <p className="text-sm font-medium text-rose-900">{error}</p>
